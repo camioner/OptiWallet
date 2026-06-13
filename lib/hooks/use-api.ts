@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   getBanksFromApi,
   getCardsFromApi,
@@ -25,6 +25,7 @@ interface ApiState<T> {
   data: T;
   loading: boolean;
   error: string | null;
+  refetch: () => void;
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -32,14 +33,17 @@ interface ApiState<T> {
 // ──────────────────────────────────────────────────────────────
 
 export function useBanks(): ApiState<ApiBank[]> {
-  const [state, setState] = useState<ApiState<ApiBank[]>>({
+  const [state, setState] = useState<{ data: ApiBank[]; loading: boolean; error: string | null }>({
     data: [],
     loading: true,
     error: null,
   });
+  const [reloadKey, setReloadKey] = useState(0);
+  const refetch = useCallback(() => setReloadKey((k) => k + 1), []);
 
   useEffect(() => {
     let cancelled = false;
+    setState((s) => ({ ...s, loading: true, error: null }));
     getBanksFromApi()
       .then((data) => {
         if (!cancelled) setState({ data, loading: false, error: null });
@@ -48,9 +52,9 @@ export function useBanks(): ApiState<ApiBank[]> {
         if (!cancelled) setState({ data: [], loading: false, error: err.message });
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [reloadKey]);
 
-  return state;
+  return { ...state, refetch };
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -58,14 +62,17 @@ export function useBanks(): ApiState<ApiBank[]> {
 // ──────────────────────────────────────────────────────────────
 
 export function useCards(): ApiState<ApiCard[]> {
-  const [state, setState] = useState<ApiState<ApiCard[]>>({
+  const [state, setState] = useState<{ data: ApiCard[]; loading: boolean; error: string | null }>({
     data: [],
     loading: true,
     error: null,
   });
+  const [reloadKey, setReloadKey] = useState(0);
+  const refetch = useCallback(() => setReloadKey((k) => k + 1), []);
 
   useEffect(() => {
     let cancelled = false;
+    setState((s) => ({ ...s, loading: true, error: null }));
     getCardsFromApi()
       .then((data) => {
         if (!cancelled) setState({ data, loading: false, error: null });
@@ -74,9 +81,9 @@ export function useCards(): ApiState<ApiCard[]> {
         if (!cancelled) setState({ data: [], loading: false, error: err.message });
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [reloadKey]);
 
-  return state;
+  return { ...state, refetch };
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -84,14 +91,17 @@ export function useCards(): ApiState<ApiCard[]> {
 // ──────────────────────────────────────────────────────────────
 
 export function useCategories(): ApiState<ApiCategory[]> {
-  const [state, setState] = useState<ApiState<ApiCategory[]>>({
+  const [state, setState] = useState<{ data: ApiCategory[]; loading: boolean; error: string | null }>({
     data: [],
     loading: true,
     error: null,
   });
+  const [reloadKey, setReloadKey] = useState(0);
+  const refetch = useCallback(() => setReloadKey((k) => k + 1), []);
 
   useEffect(() => {
     let cancelled = false;
+    setState((s) => ({ ...s, loading: true, error: null }));
     getCategoriesFromApi()
       .then((data) => {
         if (!cancelled) setState({ data, loading: false, error: null });
@@ -100,9 +110,9 @@ export function useCategories(): ApiState<ApiCategory[]> {
         if (!cancelled) setState({ data: [], loading: false, error: err.message });
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [reloadKey]);
 
-  return state;
+  return { ...state, refetch };
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -113,15 +123,17 @@ export function useMerchants(
   query: string,
   category: string | null,
 ): ApiState<ApiMerchant[]> {
-  const [state, setState] = useState<ApiState<ApiMerchant[]>>({
+  const [state, setState] = useState<{ data: ApiMerchant[]; loading: boolean; error: string | null }>({
     data: [],
     loading: true,
     error: null,
   });
+  const [reloadKey, setReloadKey] = useState(0);
+  const refetch = useCallback(() => setReloadKey((k) => k + 1), []);
 
   useEffect(() => {
     let cancelled = false;
-    setState((s) => ({ ...s, loading: true }));
+    setState((s) => ({ ...s, loading: true, error: null }));
 
     const timer = setTimeout(() => {
       getMerchantsFromApi({
@@ -140,9 +152,9 @@ export function useMerchants(
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query, category]);
+  }, [query, category, reloadKey]);
 
-  return state;
+  return { ...state, refetch };
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -154,11 +166,13 @@ export function useRecommendations(
   date: Date,
   merchantId?: string,
 ): ApiState<ApiRecommendation[]> {
-  const [state, setState] = useState<ApiState<ApiRecommendation[]>>({
+  const [state, setState] = useState<{ data: ApiRecommendation[]; loading: boolean; error: string | null }>({
     data: [],
     loading: true,
     error: null,
   });
+  const [reloadKey, setReloadKey] = useState(0);
+  const refetch = useCallback(() => setReloadKey((k) => k + 1), []);
 
   // Stabilize cardIds array reference for the effect dependency
   const cardIdsKey = cardIds.join(",");
@@ -171,7 +185,7 @@ export function useRecommendations(
     }
 
     let cancelled = false;
-    setState((s) => ({ ...s, loading: true }));
+    setState((s) => ({ ...s, loading: true, error: null }));
 
     getRecommendationsFromApi({ cardIds, date, merchantId })
       .then((data) => {
@@ -183,9 +197,9 @@ export function useRecommendations(
 
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardIdsKey, dateKey, merchantId]);
+  }, [cardIdsKey, dateKey, merchantId, reloadKey]);
 
-  return state;
+  return { ...state, refetch };
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -193,15 +207,17 @@ export function useRecommendations(
 // ──────────────────────────────────────────────────────────────
 
 export function usePromotions(merchantId: string): ApiState<ApiPromotion[]> {
-  const [state, setState] = useState<ApiState<ApiPromotion[]>>({
+  const [state, setState] = useState<{ data: ApiPromotion[]; loading: boolean; error: string | null }>({
     data: [],
     loading: true,
     error: null,
   });
+  const [reloadKey, setReloadKey] = useState(0);
+  const refetch = useCallback(() => setReloadKey((k) => k + 1), []);
 
   useEffect(() => {
     let cancelled = false;
-    setState((s) => ({ ...s, loading: true }));
+    setState((s) => ({ ...s, loading: true, error: null }));
 
     getPromotionsForMerchantFromApi(merchantId)
       .then((data) => {
@@ -212,9 +228,9 @@ export function usePromotions(merchantId: string): ApiState<ApiPromotion[]> {
       });
 
     return () => { cancelled = true; };
-  }, [merchantId]);
+  }, [merchantId, reloadKey]);
 
-  return state;
+  return { ...state, refetch };
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -222,14 +238,17 @@ export function usePromotions(merchantId: string): ApiState<ApiPromotion[]> {
 // ──────────────────────────────────────────────────────────────
 
 export function useMerchantFromApi(merchantId: string): ApiState<ApiMerchant | null> {
-  const [state, setState] = useState<ApiState<ApiMerchant | null>>({
+  const [state, setState] = useState<{ data: ApiMerchant | null; loading: boolean; error: string | null }>({
     data: null,
     loading: true,
     error: null,
   });
+  const [reloadKey, setReloadKey] = useState(0);
+  const refetch = useCallback(() => setReloadKey((k) => k + 1), []);
 
   useEffect(() => {
     let cancelled = false;
+    setState((s) => ({ ...s, loading: true, error: null }));
 
     getMerchantByIdFromApi(merchantId)
       .then((merchant) => {
@@ -240,7 +259,7 @@ export function useMerchantFromApi(merchantId: string): ApiState<ApiMerchant | n
       });
 
     return () => { cancelled = true; };
-  }, [merchantId]);
+  }, [merchantId, reloadKey]);
 
-  return state;
+  return { ...state, refetch };
 }

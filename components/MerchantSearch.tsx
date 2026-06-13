@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useMerchants, useCategories } from "@/lib/hooks/use-api";
+import { ErrorState } from "./ErrorState";
 import type { ApiMerchant, ApiCategory } from "@/lib/api-client";
 
 interface MerchantSearchProps {
@@ -12,7 +13,7 @@ export function MerchantSearch({ onSelect }: MerchantSearchProps) {
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
 
-  const { data: merchants, loading: merchantsLoading } = useMerchants(query, categoryFilter);
+  const { data: merchants, loading: merchantsLoading, error: merchantsError, refetch: refetchMerchants } = useMerchants(query, categoryFilter);
   const { data: categories, loading: categoriesLoading } = useCategories();
 
   // Count merchants per category from the full unfiltered list
@@ -89,7 +90,12 @@ export function MerchantSearch({ onSelect }: MerchantSearchProps) {
 
       {/* Results */}
       <div className="mt-5 space-y-2">
-        {merchantsLoading ? (
+        {merchantsError ? (
+          <ErrorState
+            message="No pudimos buscar comercios."
+            onRetry={refetchMerchants}
+          />
+        ) : merchantsLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="animate-pulse rounded-2xl border border-line bg-bg-2 p-4">
               <div className="flex items-center gap-3">

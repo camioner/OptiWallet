@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Sora, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 
 const sora = Sora({
   subsets: ["latin"],
@@ -55,7 +56,10 @@ export default function RootLayout({
       lang="es-CL"
       className={`${sora.variable} ${fraunces.variable} ${jetbrains.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        <ServiceWorkerRegister />
+        {children}
+      </body>
     </html>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useRecommendations } from "@/lib/hooks/use-api";
+import { ErrorState } from "./ErrorState";
 import { formatCLP, modalityLabel } from "@/lib/format";
 import type { ApiRecommendation } from "@/lib/api-client";
 
@@ -13,7 +14,7 @@ interface TodaysFeedProps {
 }
 
 export function TodaysFeed({ cardIds, date, isToday, onMerchantClick }: TodaysFeedProps) {
-  const { data: recs, loading } = useRecommendations(cardIds, date);
+  const { data: recs, loading, error, refetch } = useRecommendations(cardIds, date);
 
   // Agrupar por merchant y quedarnos con la mejor promo por comercio
   const byMerchant = useMemo(() => {
@@ -26,6 +27,15 @@ export function TodaysFeed({ cardIds, date, isToday, onMerchantClick }: TodaysFe
     }
     return Array.from(map.values()).sort((a, b) => b.discount - a.discount);
   }, [recs]);
+
+  if (error) {
+    return (
+      <ErrorState
+        message="No pudimos cargar las promociones de hoy."
+        onRetry={refetch}
+      />
+    );
+  }
 
   if (loading) {
     return (

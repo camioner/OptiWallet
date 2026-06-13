@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useBanks, useCards } from "@/lib/hooks/use-api";
+import { ErrorState } from "./ErrorState";
 import type { ApiBank, ApiCard } from "@/lib/api-client";
 
 interface WalletSetupProps {
@@ -25,13 +26,14 @@ export function WalletSetup({
   const hasSelection = selectedCardIds.length > 0;
   const isOnboarding = mode === "onboarding";
 
-  const { data: banks, loading: banksLoading } = useBanks();
-  const { data: allCards, loading: cardsLoading } = useCards();
+  const { data: banks, loading: banksLoading, error: banksError, refetch: refetchBanks } = useBanks();
+  const { data: allCards, loading: cardsLoading, error: cardsError, refetch: refetchCards } = useCards();
 
   const getCardsByBank = (bankId: string): ApiCard[] =>
     allCards.filter((c) => c.bank_id === bankId);
 
   const loading = banksLoading || cardsLoading;
+  const error = banksError || cardsError;
 
   return (
     <div className="relative min-h-dvh px-5 pb-40">
@@ -97,7 +99,15 @@ export function WalletSetup({
         </p>
 
         <div className="mt-10 space-y-3">
-          {loading
+          {error ? (
+            <ErrorState
+              message="No pudimos cargar los bancos y tarjetas."
+              onRetry={() => {
+                refetchBanks();
+                refetchCards();
+              }}
+            />
+          ) : loading
             ? Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="animate-pulse rounded-2xl border border-line bg-bg-2 p-4">
                   <div className="flex items-center gap-3">
